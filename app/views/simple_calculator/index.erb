@@ -1,0 +1,161 @@
+<header>
+  <h1>calculator</h1>
+</header>
+
+<main class="col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
+  <div class="container">
+    <section class="section">
+      <% @calculator.number_pad.each_with_index do |n, i| %>
+        <% if i % 3 == 0 %>
+          <div class="btn-toolbar mb-3" aria-label="calculator number pad">
+            <div class="btn-group">
+        <% end %>
+        <div class="pe-3">
+          <button onclick="addToInput('<%= n %>');" type="button" class="btn btn-outline-primary btn-lg">
+            <%= n %>
+          </button>
+        </div>
+        <% if i % 3 == 2 || n == 0%>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <div class="btn-toolbar mb-3" aria-label="calculator operations">
+        <div class="btn-group">
+          <% @calculator.operators.each do |o| %>
+            <div class="pe-3">
+              <button onclick="addToInput('<%= o %>');" type="button" class="btn btn-outline-info btn-lg">
+                <%= o %>
+              </button>
+            </div>
+          <%end%>
+        </div>
+      </div>
+
+      <div class="btn-toolbar mb-3" aria-label="calculator reset">
+        <div class="btn-group">
+          <button onclick="addToInput('<%= @calculator.reset %>');"  type="button" class="btn btn-outline-primary btn-lg">
+            <%= @calculator.reset %>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <output class="display-4" id="result"></output>
+    </section>
+
+    <section>
+      <div id="errors" class="d-none alert alert-primary"></div>
+    </section>
+  </div>
+
+  <% if @debug %>
+    <div class="btn-toolbar mb-3" aria-label="calculator test">
+      <button onclick="testMath();" type="button" class="btn btn-info">Run Tests</button>
+    </div>
+  <%end %>
+</main>
+
+<script>
+  function addToInput(c) {
+    document.getElementById("errors").innerHTML = "";
+    document.getElementById("errors").classList.add("d-none")
+    if (isNumber(c)) {
+      document.getElementById("result").innerHTML+= c;
+    }
+    else if ( c == "="){
+      calculate();
+    } else if ( c == "Reset"){
+      document.getElementById("result").innerHTML = "";
+    } else {
+       if (isValid()) {
+        document.getElementById("result").innerHTML+= c;
+       } else {
+        returnMustBeANumberError();
+       }
+    }
+  }
+
+  function isValid() {
+    l = document.getElementById("result").innerHTML.length;
+    previous = document.getElementById("result").innerHTML[l-1]
+    if (isNumber(previous)) {
+      return true;
+    }
+    return false;
+  }
+
+  function returnMustBeANumberError() {
+    document.getElementById("errors").classList.remove("d-none")
+    document.getElementById("errors").innerHTML = "You must enter a number";
+  }
+
+  function isNumber(c) {
+    const parsed = parseInt(c);
+    if (isNaN(parsed)) {
+      return false;
+    }
+    return true;
+  }
+
+  function calculate(){
+    if (isValid()) {
+      mathString = document.getElementById("result").innerHTML
+      document.getElementById("result").innerHTML = m(mathString);
+    } else {
+      document.getElementById("errors").classList.remove("d-none")
+      document.getElementById("errors").innerHTML = "You must enter a number for this formula to be valid";
+    }
+  }
+
+  function m(mathString) {
+    mathArray = mathString.split(/([+, \-, *, \/])/g);
+    tempArray = [];
+    //first division and multiplication
+    for (let i = 0; i < mathArray.length; i++) {
+      if (mathArray[i] == "/") {
+        tempArray[tempArray.length - 1] = parseFloat(tempArray[tempArray.length - 1]) / parseFloat(mathArray[i+1]);
+        i++;
+      } else if (mathArray[i] == "*") {
+        tempArray[tempArray.length - 1]= parseFloat(tempArray[tempArray.length - 1]) * parseFloat(mathArray[i+1]);
+        i++;
+      } else {
+        tempArray.push(mathArray[i]);
+      }
+    }
+    mathArray = tempArray
+    tempArray = []
+    //addition and subtraction
+    for (let i = 0; i < mathArray.length; i++) {
+      if (mathArray[i] == "+") {
+        tempArray[tempArray.length - 1] = parseFloat(tempArray[tempArray.length - 1]) + parseFloat(mathArray[i+1]);
+        i++;
+      } else if (mathArray[i] == "-") {
+        tempArray[tempArray.length - 1] = parseFloat(tempArray[tempArray.length - 1]) - parseFloat(mathArray[i+1]);
+        i++;
+      } else {
+        tempArray.push(mathArray[i]);
+      }
+    }
+    return tempArray;
+  }
+
+  function testMath() {
+    let v = m("3+2*5")
+    if (v != 13){
+      console.log("expected 13 but got ", v);
+    } else {
+      console.log("Passed");
+    }
+
+    v = m("753-5*56/3+2")
+    if (v != 661.6666666666666){
+      console.log("expected 661.66 but got ", v);
+    } else {
+      console.log("Passed");
+    }
+  }
+</script>
+
